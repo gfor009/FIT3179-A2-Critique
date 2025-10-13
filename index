@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coast & Campus: Youth Travel Patterns between Australia and Malaysia</title>
+  <meta name="description" content="Vega‑Lite story with a world map and multi‑view charts exploring youth‑oriented travel flows between Australia and Malaysia. Built for FIT3179 DV2." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+  <!-- Vega libs -->
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
+  <style>
+    :root{
+      --bg:#0f172a;        /* slate-900 */
+      --panel:#111827;     /* gray-900 */
+      --ink:#e5e7eb;       /* gray-200 */
+      --muted:#9ca3af;     /* gray-400 */
+      --brand:#38bdf8;     /* sky-400 */
+      --accent:#a78bfa;    /* violet-400 */
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+    }
+    html,body{margin:0;height:100%;background:radial-gradient(1200px 800px at 10% -10%, #1f2937 0%, var(--bg) 40%);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+    .container{max-width:1100px;margin-inline:auto;padding:24px;}
+
+    header.site{position:sticky;top:0;z-index:1000;backdrop-filter: blur(8px);background:color-mix(in oklab,var(--bg), transparent 40%);border-bottom:1px solid #1f2937;}
+    header .bar{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 24px;}
+    .brand{font-family:"Playfair Display",serif;font-weight:700;letter-spacing:.2px}
+    .brand .pill{display:inline-block;padding:.25rem .6rem;border:1px solid #334155;border-radius:999px;color:var(--muted);font-size:.85rem;margin-left:.5rem}
+    nav a{color:var(--muted);text-decoration:none;margin-left:16px;font-size:.95rem}
+    nav a:hover{color:var(--ink)}
+
+    .hero{display:grid;grid-template-columns:1.3fr .7fr;gap:28px;align-items:end;padding:32px 0 8px}
+    .hero h1{font:700 40px/1.1 "Playfair Display",serif;margin:0;color:white}
+    .hero p{color:var(--muted);margin:10px 0 0;max-width:60ch}
+    .tag{display:inline-block;background:#0b1220;border:1px solid #1f2937;border-radius:999px;padding:.35rem .7rem;font-size:.8rem;color:var(--brand)}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:20px}
+    .card{background:linear-gradient(180deg,#101827,#0b1220);border:1px solid #1f2937;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.45);overflow:hidden}
+    .card header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #1f2937}
+    .card header h2{font:600 18px/1.2 Inter,system-ui;margin:0;color:#fff}
+    .card header .small{color:var(--muted);font-size:.85rem}
+    .card .body{padding:14px 16px}
+    .vis{min-height:360px}
+
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+    .kpi{background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:10px 12px}
+    .kpi .label{color:var(--muted);font-size:.75rem}
+    .kpi .value{font-weight:700;font-size:1.2rem}
+
+    .notes{margin:24px 0}
+    details{background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:10px 14px}
+    summary{cursor:pointer;color:var(--ink);font-weight:600}
+    .meta{color:var(--muted);font-size:.9rem}
+
+    footer{margin:24px 0 60px;color:var(--muted);font-size:.85rem}
+    code{background:#0b1220;border:1px solid #1f2937;border-radius:6px;padding:2px 6px}
+    a{color:var(--brand)}
+
+    @media (max-width: 880px){
+      .hero{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <header class="site">
+    <div class="bar container">
+      <div class="brand">Coast & Campus<span class="pill">Vega‑Lite · Map + Multi‑view</span></div>
+      <nav>
+        <a href="#map">Map</a>
+        <a href="#time">Trend</a>
+        <a href="#meta">Data & Credits</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="tag">NEW DOMAIN · Youth travel between AU ↔ MY</div>
+        <h1>Where do young travellers move between Australia and Malaysia—and how has it changed since 2015?</h1>
+        <p>This page presents a country‑level map and compact multi‑view charts to communicate youth‑oriented travel patterns relevant to hospitality and events in <strong>Australia</strong> and <strong>Malaysia</strong>. It demonstrates scrollytelling layout, typographic hierarchy, and parsimonious interactivity using <em>Vega‑Lite</em>. Replace the small inline demo datasets with your cleaned CSVs before submitting.</p>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Max AU→MY (demo)</div><div id="kpi1" class="value">—</div></div>
+        <div class="kpi"><div class="label">Max MY→AU (demo)</div><div id="kpi2" class="value">—</div></div>
+        <div class="kpi"><div class="label">Peak Year (demo)</div><div id="kpi3" class="value">—</div></div>
+        <div class="kpi"><div class="label">Total (demo)</div><div id="kpi4" class="value">—</div></div>
+      </div>
+    </section>
+
+    <section id="map" class="grid">
+      <article class="card">
+        <header>
+          <h2>Country map with AU & MY focus</h2>
+          <span class="small">Projection = Equal Earth · Hover for values</span>
+        </header>
+        <div id="mapVis" class="body vis"></div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h2>City nodes (Gold Coast · Kuala Lumpur)</h2>
+          <span class="small">Symbol map overlay with size=flows</span>
+        </header>
+        <div id="symbolVis" class="body vis"></div>
+      </article>
+    </section>
+
+    <section id="time" class="grid">
+      <article class="card">
+        <header>
+          <h2>2015–2024 trend · AU↔MY youth travel (demo data)</h2>
+          <span class="small">Switch direction & highlight ranges</span>
+        </header>
+        <div class="body">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
+            <label for="direction" class="small">Direction</label>
+            <select id="direction" style="background:#0b1220;color:var(--ink);border:1px solid #1f2937;border-radius:8px;padding:6px 8px">
+              <option value="AU_to_MY" selected>AU → MY</option>
+              <option value="MY_to_AU">MY → AU</option>
+            </select>
+          </div>
+          <div id="trendVis" class="vis"></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <header>
+          <h2>Breakdown by purpose (demo mix)</h2>
+          <span class="small">Stacked bars with interactive legend</span>
+        </header>
+        <div id="stackVis" class="body vis"></div>
+      </article>
+    </section>
+
+    <section id="meta" class="notes">
+      <details open>
+        <summary>Data, authorship & credits</summary>
+        <p class="meta">
+          <strong>Author:</strong> Your Name · <strong>Date:</strong> 13 Oct 2025 · <strong>License:</strong> CC BY 4.0 (visuals) · Code MIT<br>
+          <strong>Data (replace before submission):</strong> Small inline demo series inspired by public releases from <em>Tourism Research Australia</em> and <em>Tourism Malaysia</em>. For grading, <em>replace the demo arrays below</em> with two real CSVs ≤1 MB total, cite exact sources and access dates, and export each Vega‑Lite spec as a formatted JSON file in your repo for transparency.
+        </p>
+        <ul class="meta">
+          <li>Why: Help hospitality stakeholders anticipate youth flows for staffing, marketing, and safety planning (e.g., Schoolies, campus intakes).</li>
+          <li>Who: Average Australian/Malaysian audience; terms are explained; light interaction only.</li>
+          <li>How/Idioms: <em>Equal Earth</em> geoshape for context, symbol map for salient cities, parameter‑driven line chart for direction switch, stacked bars for purpose share.</li>
+        </ul>
+      </details>
+    </section>
+
+    <footer>
+      Built with <code>Vega‑Lite 5</code>. Typography & layout re‑imagined (sticky header, dark glass panels, grid cards) to be <em>significantly different</em> from the prior UFO‑style page. To deploy: push this file to a GitHub repo as <code>index.html</code> → Settings → Pages → Deploy from main branch → then add your CSVs and standalone JSON specs.
+    </footer>
+  </main>
+
+  <!-- ===== Demo datasets (replace with real CSVs before submitting) ===== -->
+  <script type="application/json" id="countryFlows">
+    {
+      "values": [
+        {"country":"Australia","iso3":"AUS","youth_outbound_to_MY": 78, "youth_inbound_from_MY": 92},
+        {"country":"Malaysia","iso3":"MYS","youth_outbound_to_AU": 85, "youth_inbound_from_AU": 72}
+      ]
+    }
+  </script>
+
+  <script type="application/json" id="cityNodes">
+    {
+      "values": [
+        {"city":"Gold Coast","lat":-28.0167,"lon":153.4000,"to":"Kuala Lumpur","flows": 26},
+        {"city":"Kuala Lumpur","lat":3.1390,"lon":101.6869,"to":"Gold Coast","flows": 30}
+      ]
+    }
+  </script>
+
+  <script type="application/json" id="yearly">
+    {
+      "values": [
+        {"year":2015, "AU_to_MY":62, "MY_to_AU":58},
+        {"year":2016, "AU_to_MY":65, "MY_to_AU":60},
+        {"year":2017, "AU_to_MY":70, "MY_to_AU":67},
+        {"year":2018, "AU_to_MY":74, "MY_to_AU":72},
+        {"year":2019, "AU_to_MY":76, "MY_to_AU":75},
+        {"year":2020, "AU_to_MY":28, "MY_to_AU":22},
+        {"year":2021, "AU_to_MY":24, "MY_to_AU":20},
+        {"year":2022, "AU_to_MY":55, "MY_to_AU":52},
+        {"year":2023, "AU_to_MY":73, "MY_to_AU":76},
+        {"year":2024, "AU_to_MY":79, "MY_to_AU":83}
+      ]
+    }
+  </script>
+
+  <script type="application/json" id="purpose">
+    {
+      "values": [
+        {"year":2023, "direction":"AU_to_MY", "purpose":"Holiday", "share":48},
+        {"year":2023, "direction":"AU_to_MY", "purpose":"VFR", "share":27},
+        {"year":2023, "direction":"AU_to_MY", "purpose":"Education", "share":15},
+        {"year":2023, "direction":"AU_to_MY", "purpose":"Other", "share":10},
+
+        {"year":2023, "direction":"MY_to_AU", "purpose":"Holiday", "share":44},
+        {"year":2023, "direction":"MY_to_AU", "purpose":"VFR", "share":21},
+        {"year":2023, "direction":"MY_to_AU", "purpose":"Education", "share":25},
+        {"year":2023, "direction":"MY_to_AU", "purpose":"Other", "share":10}
+      ]
+    }
+  </script>
+
+  <!-- ===== Specs & rendering ===== -->
+  <script>
+    const countryData = JSON.parse(document.getElementById('countryFlows').textContent);
+    const cityData = JSON.parse(document.getElementById('cityNodes').textContent);
+    const yearly = JSON.parse(document.getElementById('yearly').textContent);
+    const purpose = JSON.parse(document.getElementById('purpose').textContent);
+
+    // Simple KPI calc from demo arrays
+    const maxOut = Math.max(...yearly.values.map(d=>d.AU_to_MY));
+    const maxIn  = Math.max(...yearly.values.map(d=>d.MY_to_AU));
+    const peakYr = yearly.values.reduce((a,b)=> (b.AU_to_MY+b.MY_to_AU)>(a.AU_to_MY+a.MY_to_AU)? b : a).year;
+    const total  = yearly.values.reduce((acc,d)=> acc + d.AU_to_MY + d.MY_to_AU, 0);
+    document.getElementById('kpi1').textContent = maxOut;
+    document.getElementById('kpi2').textContent = maxIn;
+    document.getElementById('kpi3').textContent = peakYr;
+    document.getElementById('kpi4').textContent = total;
+
+    // 1) World country map (focus AUS & MYS, values as choropleth)
+    const mapSpec = {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      width: 520, height: 360,
+      projection: {type: 'equalEarth'},
+      layer: [
+        { // basemap
+          data: { url: 'https://vega.github.io/vega/data/world-110m.json', format: {type:'topojson', feature:'countries'} },
+          mark: {type:'geoshape', fill: '#0b1220', stroke: '#1f2937'}
+        },
+        { // choropleth for AU/MY proxy values
+          data: { url: 'https://vega.github.io/vega/data/world-110m.json', format: {type:'topojson', feature:'countries'} },
+          transform: [
+            {type:'lookup', from: countryData, key: 'iso3', fields:['id'], values:['youth_outbound_to_MY','youth_inbound_from_MY']}
+          ],
+          mark: {type:'geoshape'},
+          encoding: {
+            color: {
+              field: 'youth_inbound_from_MY', type:'quantitative',
+              title:'Inbound from MY (index)',
+              scale:{scheme:'blues', domain:[0,100]}
+            },
+            tooltip: [
+              {field:'properties.name', type:'nominal', title:'Country'},
+              {field:'youth_inbound_from_MY', type:'quantitative', title:'Inbound from MY (index)'}
+            ]
+          }
+        }
+      ]
+    };
+
+    // 2) Symbol overlay for key cities
+    const symbolSpec = {
+      $schema:'https://vega.github.io/schema/vega-lite/v5.json',
+      width:520, height:360, projection:{type:'equalEarth'},
+      layer:[
+        {data:{ url:'https://vega.github.io/vega/data/world-110m.json', format:{type:'topojson', feature:'countries'}},
+         mark:{type:'geoshape', fill:'#0b1220', stroke:'#1f2937'}},
+        {data: cityData,
+         mark:{type:'circle', opacity:0.9},
+         encoding:{
+           longitude:{field:'lon', type:'quantitative'},
+           latitude:{field:'lat', type:'quantitative'},
+           size:{field:'flows', type:'quantitative', title:'Flow (index)', scale:{range:[40,900]}},
+           color:{field:'city', type:'nominal', legend:null, scale:{scheme:'tableau10'}},
+           tooltip:[{field:'city', type:'nominal'},{field:'to', title:'Linked to'},{field:'flows', type:'quantitative'}]
+         }}
+      ]
+    };
+
+    // 3) Trend line with direction param
+    const trendSpec = (direction='AU_to_MY') => ({
+      $schema:'https://vega.github.io/schema/vega-lite/v5.json',
+      width: 980, height: 280,
+      params:[{name:'dir', value: direction}],
+      data: yearly,
+      transform:[{calculate: `datum[dir]`, as:'value'}],
+      mark:{type:'line', point:true},
+      encoding:{
+        x:{field:'year', type:'temporal'},
+        y:{field:'value', type:'quantitative', title:'Index (demo)'},
+        color:{value:'#38bdf8'},
+        tooltip:[{field:'year', type:'temporal'},{field:'value', type:'quantitative', title:'Index'}]
+      }
+    });
+
+    // 4) Purpose stacked bars with legend‑filter
+    const stackSpec = {
+      $schema:'https://vega.github.io/schema/vega-lite/v5.json',
+      width:520, height:360,
+      data: purpose,
+      params:[{name:'dirSel', value:'AU_to_MY', bind:{input:'select', options:['AU_to_MY','MY_to_AU']}}],
+      transform:[{filter:"datum.direction==dirSel"}],
+      mark:{type:'bar'},
+      encoding:{
+        x:{field:'year', type:'ordinal'},
+        y:{field:'share', type:'quantitative', stack:'normalize', title:'Share'},
+        color:{field:'purpose', type:'nominal'},
+        tooltip:[{field:'purpose'},{field:'share', type:'quantitative'}]
+      }
+    };
+
+    vegaEmbed('#mapVis', mapSpec, {actions:false});
+    vegaEmbed('#symbolVis', symbolSpec, {actions:false});
+    vegaEmbed('#trendVis', trendSpec(), {actions:false});
+    vegaEmbed('#stackVis', stackSpec, {actions:false});
+
+    document.getElementById('direction').addEventListener('change', (e)=>{
+      vegaEmbed('#trendVis', trendSpec(e.target.value), {actions:false});
+    });
+  </script>
+</body>
+</html>
