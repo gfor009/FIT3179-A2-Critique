@@ -208,23 +208,36 @@
     vegaEmbed('#stackVis', stackSpec, {actions:false});
 
     // KPI loader from monthly CSV
-    async function loadKpis(){
-      const text = await fetch('data/ufo_monthly.csv').then(r=>r.text());
-      const rows = text.trim().split(/\r?\n/);
+    <!-- KPI loader from monthly CSV (robust parsing) -->
+<script>
+async function loadKpis(){
+  const text = await fetch('data/ufo_monthly.csv').then(r=>r.text());
 
-      const header = rows.shift().split(',');
-      const idxMonth = header.indexOf('month');
-      const idxCount = header.indexOf('count');
-      const data = rows.map(r=>{ const c=r.split(','); return {month:c[idxMonth], count:+c[idxCount]}; });
-      const total = data.reduce((a,d)=>a+d.count,0);
-      const max = Math.max(...data.map(d=>d.count));
-      const peak = data.reduce((a,b)=> (b.count>a.count? b : a));
-      document.getElementById('kpi1').textContent = max;
-      document.getElementById('kpi2').textContent = data.length + ' months';
-      document.getElementById('kpi3').textContent = peak.month;
-      document.getElementById('kpi4').textContent = total;
-    }
-    loadKpis();
+  // robust parsing: handles CRLF/LF, extra spaces, blank lines
+  const rows = text.trim().split(/\r?\n/).filter(Boolean);
+  const header = rows.shift().split(',').map(s => s.trim());
+  const idxMonth = header.findIndex(h => /^month$/i.test(h));
+  const idxCount = header.findIndex(h => /^count$/i.test(h));
+
+  const data = rows.map(r => {
+    const c = r.split(',');
+    const month = (c[idxMonth] || '').trim();
+    const count = parseFloat((c[idxCount] || '0').trim()) || 0;
+    return { month, count };
+  }).filter(d => d.month);
+
+  const total = data.reduce((a,d)=>a+d.count,0);
+  const max = Math.max(...data.map(d=>d.count));
+  const peak = data.reduce((a,b)=> (b.count>a.count? b : a));
+
+  document.getElementById('kpi1').textContent = max;
+  document.getElementById('kpi2').textContent = data.length + ' months';
+  document.getElementById('kpi3').textContent = peak.month;
+  document.getElementById('kpi4').textContent = total;
+}
+loadKpis();
+</script>
+
   </script>
 </body>
 </html>
