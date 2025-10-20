@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UFO Sightings Explorer — Maps & Multi‑View (Vega‑Lite)</title>
-  <meta name="description" content="Interactive Vega‑Lite story about UFO sightings: top cities map, hourly pattern (radial), monthly trend, and shape composition by year." />
+  <title>UFO Sightings Explorer — Maps & Multi-View (Vega-Lite)</title>
+  <meta name="description" content="Interactive Vega-Lite story about UFO sightings: top cities map, hourly pattern (radial), monthly trend, and shape composition by year." />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,16 +12,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
   <!-- Vega libs -->
-<script src="https://unpkg.com/vega@5"></script>
-<script src="https://unpkg.com/vega-lite@5"></script>
-<script src="https://unpkg.com/vega-embed@6"></script>
+  <script src="https://unpkg.com/vega@5"></script>
+  <script src="https://unpkg.com/vega-lite@5"></script>
+  <script src="https://unpkg.com/vega-embed@6"></script>
 
   <style>
     :root{
       --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --brand:#38bdf8; --accent:#a78bfa;
     }
     html,body{margin:0;height:100%;background:radial-gradient(1200px 800px at 10% -10%, #1f2937 0%, var(--bg) 40%);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
-    .container{max-width:1100px;margin-inline:auto;padding:24px;}
+    /* WIDER so legends have room */
+    .container{max-width:1280px;margin-inline:auto;padding:24px;}
     header.site{position:sticky;top:0;z-index:1000;backdrop-filter: blur(8px);background:color-mix(in oklab,var(--bg), transparent 40%);border-bottom:1px solid #1f2937;}
     header .bar{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 24px;}
     .brand{font-family:"Playfair Display",serif;font-weight:700;letter-spacing:.2px}
@@ -56,7 +57,7 @@
 <body>
   <header class="site">
     <div class="bar container">
-      <div class="brand">UFO Sightings Explorer<span class="pill">Vega‑Lite · Map + Multi‑view</span></div>
+      <div class="brand">UFO Sightings Explorer<span class="pill">Vega-Lite · Map + Multi-view</span></div>
       <nav>
         <a href="#map">Map</a>
         <a href="#time">Time</a>
@@ -81,14 +82,16 @@
     </section>
 
     <section id="map" class="grid">
-      <article class="card">
+      <article class="card" style="grid-column:1/-1">
         <header>
-          <h2>Top cities map (symbol size = sightings)</h2>
-          <span class="small">Projection = Equal Earth · Hover for details</span>
+          <h2>Top cities — USA & Europe (symbol size = sightings)</h2>
+          <span class="small">US: Albers USA · Europe: Mercator · Hover for details</span>
         </header>
         <div id="symbolVis" class="body vis"></div>
       </article>
+    </section>
 
+    <section class="grid" id="time">
       <article class="card">
         <header>
           <h2>Sightings by hour (radial)</h2>
@@ -96,9 +99,7 @@
         </header>
         <div id="hourVis" class="body vis"></div>
       </article>
-    </section>
 
-    <section id="time" class="grid">
       <article class="card">
         <header>
           <h2>Monthly trend of sightings</h2>
@@ -132,52 +133,114 @@
     </section>
 
     <footer>
-      Built with <code>Vega‑Lite 5</code>. To deploy as GitHub Pages: push as <code>index.html</code>, enable Pages. Place CSVs in <code>/data</code> (see below specs).
+      Built with <code>Vega-Lite 5</code>. To deploy as GitHub Pages: push as <code>index.html</code>, enable Pages. Place CSVs in <code>/data</code>.
     </footer>
   </main>
 
   <!-- ===== Specs ===== -->
   <script>
-    // 1) Symbol map: /data/ufo_top_cities.csv (city,state,country,latitude,longitude,count)
+    /* 1) SYMBOL MAP — split into USA & EUROPE panels (shared colour legend)
+       data: /data/ufo_top_cities.csv (city,state,country,latitude,longitude,count) */
     const symbolSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:520, height:360, projection:{type:'equalEarth'},
-      layer:[
-        {data:{ url:'https://vega.github.io/vega/data/world-110m.json', format:{type:'topojson', feature:'countries'}},
-         mark:{type:'geoshape', fill:'#0b1220', stroke:'#1f2937'}},
-        {data: { url: 'data/ufo_top_cities.csv' },
-         mark:{type:'circle', opacity:0.9},
-         encoding:{
-           longitude:{field:'longitude', type:'quantitative'},
-           latitude:{field:'latitude', type:'quantitative'},
-           size:{field:'count', type:'quantitative', title:'Sightings', scale:{range:[40,900]}},
-           color:{field:'city', type:'nominal', legend:null, scale:{scheme:'tableau10'}},
-           tooltip:[
-             {field:'city'},{field:'state'},{field:'country'},
-             {field:'count', type:'quantitative', title:'Sightings'}
-           ]
-         }}
-      ]
+      hconcat: [
+        {
+          title: "USA",
+          width: 600, height: 360,
+          projection: {type:'albersUsa'},
+          layer: [
+            { // US basemap
+              data:{ url:'https://vega.github.io/vega-datasets/data/us-10m.json', format:{type:'topojson', feature:'states'}},
+              mark:{type:'geoshape', fill:'#0b1220', stroke:'#1f2937'}
+            },
+            {
+              data:{ url:'data/ufo_top_cities.csv' },
+              transform:[
+                {filter: 'datum.longitude >= -130 && datum.longitude <= -60 && datum.latitude >= 20 && datum.latitude <= 55'}
+              ],
+              mark:{type:'circle', opacity:0.9, stroke:'#ffffff', strokeWidth:0.4},
+              encoding:{
+                longitude:{field:'longitude', type:'quantitative'},
+                latitude:{field:'latitude', type:'quantitative'},
+                size:{field:'count', type:'quantitative', title:'Sightings', scale:{range:[40,900]}},
+                color:{
+                  field:'city', type:'nominal',
+                  /* Non-default palette (12 distinct hues) */
+                  scale:{scheme:{name:'set3', count:12}},
+                  legend:{title:'City', orient:'bottom', direction:'horizontal', columns:4, labelLimit:220}
+                },
+                tooltip:[
+                  {field:'city'}, {field:'state'}, {field:'country'},
+                  {field:'count', type:'quantitative', title:'Sightings'}
+                ]
+              }
+            }
+          ]
+        },
+        {
+          title: "Europe",
+          width: 600, height: 360,
+          projection: {type:'mercator', center:[10,50], scale: 380},
+          layer: [
+            { // World basemap (light)
+              data:{ url:'https://vega.github.io/vega-datasets/data/world-110m.json', format:{type:'topojson', feature:'countries'}},
+              mark:{type:'geoshape', fill:'#0b1220', stroke:'#1f2937'}
+            },
+            {
+              data:{ url:'data/ufo_top_cities.csv' },
+              transform:[
+                {filter: 'datum.longitude >= -25 && datum.longitude <= 40 && datum.latitude >= 34 && datum.latitude <= 72'}
+              ],
+              mark:{type:'circle', opacity:0.9, stroke:'#ffffff', strokeWidth:0.4},
+              encoding:{
+                longitude:{field:'longitude', type:'quantitative'},
+                latitude:{field:'latitude', type:'quantitative'},
+                size:{field:'count', type:'quantitative', title:'Sightings', scale:{range:[40,900]}},
+                color:{
+                  field:'city', type:'nominal',
+                  /* Share the same palette so legend stays consistent */
+                  scale:{scheme:{name:'set3', count:12}},
+                  legend:{title:'City', orient:'bottom', direction:'horizontal', columns:4, labelLimit:220}
+                },
+                tooltip:[
+                  {field:'city'}, {field:'state'}, {field:'country'},
+                  {field:'count', type:'quantitative', title:'Sightings'}
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      resolve: {"scale": {"color": "shared"}},
+      config:{
+        background:null,
+        legend: {orient:'bottom', direction:'horizontal', columns:4, labelFontSize:11, titleFontSize:12, columnPadding:12}
+      }
     };
 
-    // 2) Hour radial: /data/ufo_hour.csv (hour,count)
+    /* 2) HOUR RADIAL — non-default palette + bottom legend */
     const hourSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:520, height:360,
+      width:600, height:360,
       data:{ url:'data/ufo_hour.csv' },
       transform:[{calculate:'format(datum.hour, "02")', as:'hlabel'}],
       mark:{type:'arc', innerRadius:80, stroke:'#0b1220'},
       encoding:{
         theta:{field:'count', type:'quantitative', stack:true},
-        color:{field:'hlabel', type:'nominal', legend:{title:'Hour (00–23)'}},
+        color:{
+          field:'hlabel', type:'nominal',
+          scale:{scheme:{name:'set3', count:24}},  /* non-default */
+          legend:{title:'Hour (00–23)', orient:'bottom', columns:6, labelLimit:160}
+        },
         tooltip:[{field:'hour', title:'Hour (0–23)'},{field:'count', type:'quantitative'}]
-      }
+      },
+      config:{legend:{orient:'bottom'}}
     };
 
-    // 3) Monthly trend: /data/ufo_monthly.csv (month,count)
+    /* 3) MONTHLY TREND — already custom colour; widen */
     const trendSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:980, height:280,
+      width:1244, height:280,
       data:{ url:'data/ufo_monthly.csv' },
       mark:{type:'line', point:true},
       encoding:{
@@ -188,16 +251,20 @@
       }
     };
 
-    // 4) Shapes by year: /data/ufo_shape_year.csv (year,shape,share)
+    /* 4) SHAPES by YEAR — non-default palette + bottom legend */
     const stackSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:520, height:360,
+      width:600, height:360,
       data: { url: 'data/ufo_shape_year.csv' },
       mark:{type:'bar'},
       encoding:{
         x:{field:'year', type:'ordinal', title:'Year'},
         y:{field:'share', type:'quantitative', stack:'normalize', title:'Shape share'},
-        color:{field:'shape', type:'nominal', title:'UFO shape'},
+        color:{
+          field:'shape', type:'nominal', title:'UFO shape',
+          scale:{scheme:'set2'},                   /* non-default */
+          legend:{orient:'bottom', columns:4, labelLimit:220}
+        },
         tooltip:[{field:'year'},{field:'shape'},{field:'share', type:'quantitative'}]
       }
     };
@@ -207,7 +274,7 @@
     vegaEmbed('#trendVis', trendSpec, {actions:false});
     vegaEmbed('#stackVis', stackSpec, {actions:false});
 
-    // KPI loader from monthly CSV
+    // KPI loader from monthly CSV (unchanged)
     async function loadKpis(){
       const text = await fetch('data/ufo_monthly.csv').then(r=>r.text());
       const rows = text.trim().split(/\r?\n/);
