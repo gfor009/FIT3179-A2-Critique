@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>UFO Sightings Explorer — USA Focus (Vega-Lite)</title>
-  <meta name="description" content="Interactive Vega-Lite story about UFO sightings in the USA: top cities map, hourly pattern (radial), monthly trend, and shape composition by year." />
+  <meta name="description" content="USA-focused UFO visualisation with a debug mode that checks data files and renders without external basemaps." />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,54 +17,43 @@
   <script src="https://unpkg.com/vega-embed@6"></script>
 
   <style>
-    :root{
-      --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --brand:#38bdf8; --accent:#a78bfa;
-    }
-    html,body{
-      margin:0;height:100%;
-      background:radial-gradient(1200px 800px at 10% -10%, #1f2937 0%, var(--bg) 40%);
-      color:var(--ink);
-      font-family:"Space Grotesk",system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      line-height:1.6;
-    }
-    .container{max-width:1280px;margin-inline:auto;padding:28px;}
-    header.site{position:sticky;top:0;z-index:1000;backdrop-filter: blur(8px);background:color-mix(in oklab,var(--bg), transparent 40%);border-bottom:1px solid #1f2937;}
-    header .bar{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 24px;}
-    .brand{font-family:"Playfair Display",serif;font-weight:700;letter-spacing:.2px}
-    .brand .pill{display:inline-block;padding:.25rem .6rem;border:1px solid #334155;border-radius:999px;color:var(--muted);font-size:.85rem;margin-left:.5rem}
-    nav a{color:var(--muted);text-decoration:none;margin-left:16px;font-size:.95rem}
-    nav a:hover{color:var(--ink)}
-    .hero{display:grid;grid-template-columns:1.3fr .7fr;gap:28px;align-items:end;padding:32px 0 8px}
-    .hero h1{font:700 44px/1.12 "Playfair Display",serif;letter-spacing:.2px;margin:0 0 8px;color:#fff}
-    .hero p{color:var(--muted);margin:10px 0 0;max-width:68ch;font-size:1.02rem}
-    .tag{display:inline-block;background:#0b1220;border:1px solid #1f2937;border-radius:999px;padding:.35rem .7rem;font-size:.8rem;color:var(--brand)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px}
-    .card{background:linear-gradient(180deg,#101827,#0b1220);border:1px solid #1f2937;border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.45);overflow:hidden}
-    .card header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #1f2937}
-    .card header h2{font:600 18px/1.2 "Space Grotesk",system-ui;margin:0;color:#fff;letter-spacing:.2px}
-    .card header .small{color:var(--muted);font-size:.85rem}
-    .card .body{padding:18px 18px 8px}
-    .vis{min-height:380px}
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
-    .kpi{background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:10px 12px}
-    .kpi .label{color:var(--muted);font-size:.75rem}
-    .kpi .value{font-weight:700;font-size:1.2rem}
-    .notes{margin:24px 0}
-    details{background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:10px 14px}
-    summary{cursor:pointer;color:var(--ink);font-weight:600}
-    .meta{color:var(--muted);font-size:.9rem}
-    footer{margin:24px 0 60px;color:var(--muted);font-size:.85rem}
-    code{background:#0b1220;border:1px solid #1f2937;border-radius:6px;padding:2px 6px}
-    a{color:var(--brand)}
-    .chart-note{margin:8px 18px 18px;color:#cbd5e1;font-size:.95rem}
-    #map .card{grid-column:1/-1} /* full-width map for hierarchy */
-    @media (max-width: 880px){ .hero{grid-template-columns:1fr} .grid{grid-template-columns:1fr} }
+    :root{ --bg:#0f172a; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --brand:#38bdf8; --accent:#a78bfa; }
+    html,body{ margin:0; height:100%; background:radial-gradient(1200px 800px at 10% -10%, #1f2937 0%, var(--bg) 40%); color:var(--ink);
+      font-family:"Space Grotesk",system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; line-height:1.6; }
+    .container{ max-width:1280px; margin-inline:auto; padding:28px; }
+    header.site{ position:sticky; top:0; z-index:1000; backdrop-filter: blur(8px); background:color-mix(in oklab,var(--bg), transparent 40%); border-bottom:1px solid #1f2937; }
+    header .bar{ display:flex; gap:16px; align-items:center; justify-content:space-between; padding:12px 24px; }
+    .brand{ font-family:"Playfair Display",serif; font-weight:700; letter-spacing:.2px }
+    .brand .pill{ display:inline-block; padding:.25rem .6rem; border:1px solid #334155; border-radius:999px; color:var(--muted); font-size:.85rem; margin-left:.5rem }
+    nav a{ color:var(--muted); text-decoration:none; margin-left:16px; font-size:.95rem } nav a:hover{ color:var(--ink) }
+    .hero{ display:grid; grid-template-columns:1.3fr .7fr; gap:28px; align-items:end; padding:32px 0 8px }
+    .hero h1{ font:700 44px/1.12 "Playfair Display",serif; letter-spacing:.2px; margin:0 0 8px; color:#fff }
+    .hero p{ color:var(--muted); margin:10px 0 0; max-width:68ch; font-size:1.02rem }
+    .tag{ display:inline-block; background:#0b1220; border:1px solid #1f2937; border-radius:999px; padding:.35rem .7rem; font-size:.8rem; color:var(--brand) }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:24px }
+    .card{ background:linear-gradient(180deg,#101827,#0b1220); border:1px solid #1f2937; border-radius:18px; box-shadow:0 10px 40px rgba(0,0,0,.45); overflow:hidden }
+    .card header{ display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid #1f2937 }
+    .card header h2{ font:600 18px/1.2 "Space Grotesk",system-ui; margin:0; color:#fff; letter-spacing:.2px }
+    .card header .small{ color:var(--muted); font-size:.85rem }
+    .card .body{ padding:18px 18px 8px }
+    .vis{ min-height:380px }
+    .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:10px }
+    .kpi{ background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:10px 12px }
+    .kpi .label{ color:var(--muted); font-size:.75rem } .kpi .value{ font-weight:700; font-size:1.2rem }
+    .notes{ margin:24px 0 } details{ background:#0b1220; border:1px solid #1f2937; border-radius:12px; padding:10px 14px }
+    summary{ cursor:pointer; color:var(--ink); font-weight:600 } .meta{ color:var(--muted); font-size:.9rem }
+    footer{ margin:24px 0 60px; color:var(--muted); font-size:.85rem }
+    code{ background:#0b1220; border:1px solid #1f2937; border-radius:6px; padding:2px 6px } a{ color:var(--brand) }
+    .chart-note{ margin:8px 18px 18px; color:#cbd5e1; font-size:.95rem }
+    #map .card{ grid-column:1/-1 } /* full-width */
+    .warn{ display:none; margin:12px 0; padding:10px 14px; border-radius:10px; background:#3f1d1d; color:#fecaca; border:1px solid #7f1d1d }
+    @media (max-width: 880px){ .hero{ grid-template-columns:1fr } .grid{ grid-template-columns:1fr } }
   </style>
 </head>
 <body>
   <header class="site">
     <div class="bar container">
-      <div class="brand">UFO Sightings Explorer<span class="pill">Vega-Lite · USA Focus</span></div>
+      <div class="brand">UFO Sightings Explorer <span class="pill">Vega-Lite · USA Focus (Debug)</span></div>
       <nav>
         <a href="#map">Map</a>
         <a href="#time">Time</a>
@@ -78,7 +67,8 @@
       <div>
         <div class="tag">UFO dataset · cleaned + aggregated</div>
         <h1>Where and when do UFO sightings cluster in the USA?</h1>
-        <p>Four coordinated views summarise patterns in the data: a symbol map of top cities, a radial hourly rhythm, a monthly trend, and a yearly shape composition. Visual marks and channels are consistent; colour and figure-ground establish a clear hierarchy; annotations and short notes guide interpretation.</p>
+        <p>Four coordinated views summarise patterns in the data. This debug build adds file checks and removes external basemap dependencies so you can see data points even if a map file fails to load.</p>
+        <div id="warn" class="warn">Debug: one or more CSV files could not be loaded from the <code>/data</code> folder. See the browser console for details.</div>
       </div>
       <div class="kpis">
         <div class="kpi"><div class="label">Peak month count</div><div id="kpi1" class="value">—</div></div>
@@ -92,10 +82,10 @@
       <article class="card">
         <header>
           <h2>Top US cities (symbol size = sightings)</h2>
-          <span class="small">Projection: Albers USA · Hover to highlight</span>
+          <span class="small">Projection: Albers USA · Basemap disabled (debug) · Hover to highlight</span>
         </header>
         <div id="symbolVis" class="body vis"></div>
-        <p class="chart-note">Clusters concentrate along major corridors and coastal metros; a handful of large bubbles indicate outsized reporting relative to neighbouring cities.</p>
+        <p class="chart-note">If you see circles here, your libraries are fine. If you only see a blank panel, open DevTools → Console for errors.</p>
       </article>
     </section>
 
@@ -134,41 +124,68 @@
         <ul class="meta">
           <li><strong>Author:</strong> Your Name</li>
           <li><strong>Date:</strong> 21 Oct 2025</li>
-          <li><strong>Data source:</strong> <code>scrubbed.csv</code> (cleaned). Aggregates used here: <code>ufo_top_cities.csv</code>, <code>ufo_hour.csv</code>, <code>ufo_monthly.csv</code>, <code>ufo_shape_year.csv</code>.</li>
+          <li><strong>Data source:</strong> <code>scrubbed.csv</code> (cleaned). Aggregates used: <code>ufo_top_cities.csv</code>, <code>ufo_hour.csv</code>, <code>ufo_monthly.csv</code>, <code>ufo_shape_year.csv</code>. All expected in the <code>/data</code> folder (case-sensitive).</li>
           <li><strong>Tools:</strong> Vega-Lite 5, custom HTML/CSS</li>
           <li><strong>Licenses:</strong> Visuals CC BY 4.0; Code MIT</li>
         </ul>
       </details>
     </section>
 
-    <footer>
-      Built with <code>Vega-Lite 5</code>. Deploy via GitHub Pages with this file as <code>index.html</code>. CSVs must be in <code>/data</code>.
-    </footer>
+    <footer>Built with <code>Vega-Lite 5</code>. This debug build verifies your data paths and renders points without a basemap to avoid external fetch issues.</footer>
   </main>
 
-  <!-- ===== Vega-Lite specs ===== -->
+  <!-- ===== Specs + Debug ===== -->
   <script>
-    /* 1) SYMBOL MAP — USA-only (robust basemap)
-       data: /data/ufo_top_cities.csv (city,state,country,latitude,longitude,count) */
+    // ---- quick CSV presence check (shows red banner if any missing/empty) ----
+    const files = [
+      'data/ufo_top_cities.csv',
+      'data/ufo_hour.csv',
+      'data/ufo_monthly.csv',
+      'data/ufo_shape_year.csv'
+    ];
+    (async () => {
+      try {
+        let anyProblem = false;
+        for (const f of files) {
+          const res = await fetch(f);
+          if (!res.ok) { console.error('Missing or unreachable:', f, res.status, res.statusText); anyProblem = true; continue; }
+          const text = (await res.text()).trim();
+          const lines = text.split(/\r?\n/);
+          if (lines.length < 2) { console.error('Empty or header-only CSV:', f); anyProblem = true; }
+        }
+        if (anyProblem) document.getElementById('warn').style.display = 'block';
+      } catch (e) {
+        console.error('CSV check failed:', e);
+        document.getElementById('warn').style.display = 'block';
+      }
+    })();
+
+    // ---- 1) USA MAP — NO BASEMAP (points only) so nothing external can fail ----
+    // If this renders circles, your CSV path + field names are correct and Vega is fine.
+    // If not, the issue is your CSV path or headers. Expected columns: city,state,country,latitude,longitude,count
     const symbolSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
       width: 1160, height: 420,
       projection: { type:'albersUsa' },
-      params: [
-        { name: "ptHover", select: { type:"point", fields:["city"], on:"mouseover", clear:"mouseout" } }
-      ],
+      params: [{ name: "ptHover", select: { type:"point", fields:["city"], on:"mouseover", clear:"mouseout" } }],
       layer: [
+        // Hideable test points (to prove rendering works). Remove later if you want.
         {
-          // Basemap: draw only the USA from world-110m (avoids some us-10m CORS hiccups)
-          data:{
-            url:'https://vega.github.io/vega-datasets/data/world-110m.json',
-            format:{ type:'topojson', feature:'countries' }
-          },
-          transform:[ { filter: 'datum.id == 840' } ], /* 840 = USA */
-          mark:{ type:'geoshape', fill:'#0b1220', stroke:'#1f2937' }
+          data:{ values: [
+            {city:"Test LA", state:"CA", latitude:34.05, longitude:-118.24, count:50},
+            {city:"Test NYC", state:"NY", latitude:40.71, longitude:-74.00, count:80},
+            {city:"Test CHI", state:"IL", latitude:41.88, longitude:-87.63, count:65}
+          ]},
+          mark:{ type:'circle', opacity:0.25 },
+          encoding:{
+            longitude:{ field:'longitude', type:'quantitative' },
+            latitude:{ field:'latitude', type:'quantitative' },
+            size:{ field:'count', type:'quantitative', scale:{range:[10,200]} },
+            color:{ value:'#64748b' }
+          }
         },
+        // Your real points from CSV
         {
-          // City bubbles (continental US bbox)
           data:{ url:'data/ufo_top_cities.csv' },
           transform:[
             { filter: 'datum.longitude >= -130 && datum.longitude <= -60 && datum.latitude >= 22 && datum.latitude <= 50' }
@@ -177,64 +194,24 @@
           encoding:{
             longitude:{ field:'longitude', type:'quantitative' },
             latitude:{ field:'latitude', type:'quantitative' },
-            size:{
-              field:'count', type:'quantitative', title:'Sightings',
-              scale:{ range:[30,1600] }
-            },
+            size:{ field:'count', type:'quantitative', title:'Sightings', scale:{ range:[30,1600] } },
             color:{
               field:'city', type:'nominal', title:'City',
               scale:{ range: ["#22c55e","#06b6d4","#a78bfa","#f59e0b","#ef4444","#14b8a6","#eab308","#f97316","#10b981","#60a5fa","#f472b6","#38bdf8"] },
               legend:{ orient:'bottom', direction:'horizontal', columns:6, labelLimit:220 }
             },
-            opacity:{
-              condition: { param:"ptHover", empty:false, value: 1 },
-              value: 0.78
-            },
-            tooltip:[
-              {field:'city'},{field:'state'},
-              {field:'count', type:'quantitative', title:'Sightings'}
-            ]
+            opacity:{ condition: { param:"ptHover", empty:false, value: 1 }, value: 0.78 },
+            tooltip:[ {field:'city'},{field:'state'},{field:'count', type:'quantitative', title:'Sightings'} ]
           }
-        },
-        {
-          // Labels for top 3 cities (offset for readability)
-          data:{ url:'data/ufo_top_cities.csv' },
-          transform:[
-            { filter: 'datum.longitude >= -130 && datum.longitude <= -60 && datum.latitude >= 22 && datum.latitude <= 50' },
-            { window:[{op:"rank", as:"r"}], sort:[{field:"count", order:"descending"}] },
-            { filter: "datum.r <= 3" }
-          ],
-          layer:[
-            {
-              mark:{ type:"text", dx: 8, dy: -10, font:"Space Grotesk", fontSize:12, fill:"#e5e7eb", stroke:"#0b1220", strokeWidth:2 },
-              encoding:{
-                longitude:{ field:"longitude", type:"quantitative" },
-                latitude:{ field:"latitude", type:"quantitative" },
-                text:{ field:"city" }
-              }
-            },
-            {
-              mark:{ type:"text", dx: 8, dy: 6, font:"Space Grotesk", fontSize:11, fill:"#9ca3af" },
-              encoding:{
-                longitude:{ field:"longitude", type:"quantitative" },
-                latitude:{ field:"latitude", type:"quantitative" },
-                text:{ field:"count" }
-              }
-            }
-          ]
         }
       ],
-      config:{
-        background:null,
-        legend:{ orient:'bottom', direction:'horizontal', columns:6, labelFontSize:11, titleFontSize:12, columnPadding:12 }
-      }
+      config:{ background:null, legend:{ orient:'bottom', direction:'horizontal', columns:6, labelFontSize:11, titleFontSize:12, columnPadding:12 } }
     };
 
-    /* 2) HOUR RADIAL — non-default palette + bottom legend
-       data: /data/ufo_hour.csv (hour,count) */
+    // ---- 2) HOUR RADIAL ----
     const hourSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:600, height:380,
+      width:400, height:380,
       data:{ url:'data/ufo_hour.csv' },
       transform:[{calculate:'format(datum.hour, "02")', as:'hlabel'}],
       mark:{type:'arc', innerRadius:90, stroke:'#0b1220'},
@@ -243,18 +220,17 @@
         color:{
           field:'hlabel', type:'nominal',
           scale:{scheme:{name:'set3', count:24}},
-          legend:{title:'Hour (00–23)', orient:'bottom', columns:6, labelLimit:160}
+          legend:{title:'Hour (00–23)', orient:'bottom', columns:6, labelLimit:360}
         },
         tooltip:[{field:'hour', title:'Hour (0–23)'},{field:'count', type:'quantitative'}]
       },
       config:{legend:{orient:'bottom'}}
     };
 
-    /* 3) MONTHLY TREND — custom colour; wide for labels
-       data: /data/ufo_monthly.csv (month,count) */
+    // ---- 3) MONTHLY TREND ----
     const trendSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:600, height:280,
+      width:400, height:280,
       data:{ url:'data/ufo_monthly.csv' },
       mark:{type:'line', point:true},
       encoding:{
@@ -265,11 +241,10 @@
       }
     };
 
-    /* 4) SHAPES by YEAR — non-default palette + bottom legend
-       data: /data/ufo_shape_year.csv (year,shape,share) */
+    // ---- 4) SHAPES by YEAR ----
     const stackSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:600, height:380,
+      width:400, height:280,
       data: { url: 'data/ufo_shape_year.csv' },
       mark:{type:'bar'},
       encoding:{
@@ -284,27 +259,36 @@
       }
     };
 
-    vegaEmbed('#symbolVis', symbolSpec, {actions:false});
-    vegaEmbed('#hourVis', hourSpec, {actions:false});
-    vegaEmbed('#trendVis', trendSpec, {actions:false});
-    vegaEmbed('#stackVis', stackSpec, {actions:false});
+    // ---- Render everything ----
+    vegaEmbed('#symbolVis', symbolSpec, {actions:false}).catch(e=>console.error('Map render error:', e));
+    vegaEmbed('#hourVis', hourSpec,   {actions:false}).catch(e=>console.error('Hour chart error:', e));
+    vegaEmbed('#trendVis', trendSpec, {actions:false}).catch(e=>console.error('Trend chart error:', e));
+    vegaEmbed('#stackVis', stackSpec, {actions:false}).catch(e=>console.error('Stacked chart error:', e));
 
-    // KPI loader from monthly CSV
+    // ---- KPI loader with error surfacing ----
     async function loadKpis(){
-      const text = await fetch('data/ufo_monthly.csv').then(r=>r.text());
-      const rows = text.trim().split(/\r?\n/);
-
-      const header = rows.shift().split(',');
-      const idxMonth = header.indexOf('month');
-      const idxCount = header.indexOf('count');
-      const data = rows.map(r=>{ const c=r.split(','); return {month:c[idxMonth], count:+c[idxCount]}; });
-      const total = data.reduce((a,d)=>a+d.count,0);
-      const max = Math.max(...data.map(d=>d.count));
-      const peak = data.reduce((a,b)=> (b.count>a.count? b : a));
-      document.getElementById('kpi1').textContent = max;
-      document.getElementById('kpi2').textContent = data.length + ' months';
-      document.getElementById('kpi3').textContent = peak.month;
-      document.getElementById('kpi4').textContent = total;
+      try{
+        const res = await fetch('data/ufo_monthly.csv');
+        if(!res.ok){ console.error('KPI CSV missing:', res.status, res.statusText); document.getElementById('warn').style.display='block'; return; }
+        const text = (await res.text()).trim();
+        const rows = text.split(/\r?\n/);
+        if(rows.length<2){ console.error('KPI CSV has no rows'); document.getElementById('warn').style.display='block'; return; }
+        const header = rows.shift().split(',');
+        const idxMonth = header.indexOf('month');
+        const idxCount = header.indexOf('count');
+        if(idxMonth<0 || idxCount<0){ console.error('KPI CSV headers must include "month,count"'); document.getElementById('warn').style.display='block'; return; }
+        const data = rows.map(r=>{ const c=r.split(','); return {month:c[idxMonth], count:+c[idxCount]}; });
+        const total = data.reduce((a,d)=>a+d.count,0);
+        const max = Math.max(...data.map(d=>d.count));
+        const peak = data.reduce((a,b)=> (b.count>a.count? b : a));
+        document.getElementById('kpi1').textContent = max;
+        document.getElementById('kpi2').textContent = data.length + ' months';
+        document.getElementById('kpi3').textContent = peak.month;
+        document.getElementById('kpi4').textContent = total;
+      }catch(e){
+        console.error('KPI load failed:', e);
+        document.getElementById('warn').style.display='block';
+      }
     }
     loadKpis();
   </script>
