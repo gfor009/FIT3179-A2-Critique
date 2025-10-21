@@ -211,7 +211,7 @@
     // ---- 2) HOUR RADIAL ----
     const hourSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:400, height:380,
+      width:800, height:380,
       data:{ url:'data/ufo_hour.csv' },
       transform:[{calculate:'format(datum.hour, "02")', as:'hlabel'}],
       mark:{type:'arc', innerRadius:90, stroke:'#0b1220'},
@@ -230,7 +230,7 @@
     // ---- 3) MONTHLY TREND ----
     const trendSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:400, height:280,
+      width:800, height:280,
       data:{ url:'data/ufo_monthly.csv' },
       mark:{type:'line', point:true},
       encoding:{
@@ -244,7 +244,7 @@
     // ---- 4) SHAPES by YEAR ----
     const stackSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
-      width:400, height:280,
+      width:800, height:280,
       data: { url: 'data/ufo_shape_year.csv' },
       mark:{type:'bar'},
       encoding:{
