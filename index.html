@@ -146,9 +146,9 @@
     </footer>
   </main>
 
-  <!-- ===== Specs ===== -->
+  <!-- ===== Vega-Lite specs ===== -->
   <script>
-    /* 1) SYMBOL MAP — USA-only with hover highlight and top-city labels
+    /* 1) SYMBOL MAP — USA-only (robust basemap)
        data: /data/ufo_top_cities.csv (city,state,country,latitude,longitude,count) */
     const symbolSpec = {
       $schema:'https://vega.github.io/schema/vega-lite/v5.json',
@@ -159,9 +159,12 @@
       ],
       layer: [
         {
-          // Basemap: US states
-          data:{ url:'https://vega.github.io/vega-datasets/data/us-10m.json',
-                 format:{type:'topojson', feature:'states'} },
+          // Basemap: draw only the USA from world-110m (avoids some us-10m CORS hiccups)
+          data:{
+            url:'https://vega.github.io/vega-datasets/data/world-110m.json',
+            format:{ type:'topojson', feature:'countries' }
+          },
+          transform:[ { filter: 'datum.id == 840' } ], /* 840 = USA */
           mark:{ type:'geoshape', fill:'#0b1220', stroke:'#1f2937' }
         },
         {
@@ -180,7 +183,6 @@
             },
             color:{
               field:'city', type:'nominal', title:'City',
-              // Non-default palette (extend range if you have >12 cities)
               scale:{ range: ["#22c55e","#06b6d4","#a78bfa","#f59e0b","#ef4444","#14b8a6","#eab308","#f97316","#10b981","#60a5fa","#f472b6","#38bdf8"] },
               legend:{ orient:'bottom', direction:'horizontal', columns:6, labelLimit:220 }
             },
@@ -195,7 +197,7 @@
           }
         },
         {
-          // Labels for top 3 cities (text only; offset for clarity)
+          // Labels for top 3 cities (offset for readability)
           data:{ url:'data/ufo_top_cities.csv' },
           transform:[
             { filter: 'datum.longitude >= -130 && datum.longitude <= -60 && datum.latitude >= 22 && datum.latitude <= 50' },
@@ -240,7 +242,7 @@
         theta:{field:'count', type:'quantitative', stack:true},
         color:{
           field:'hlabel', type:'nominal',
-          scale:{scheme:{name:'set3', count:24}},  /* non-default */
+          scale:{scheme:{name:'set3', count:24}},
           legend:{title:'Hour (00–23)', orient:'bottom', columns:6, labelLimit:160}
         },
         tooltip:[{field:'hour', title:'Hour (0–23)'},{field:'count', type:'quantitative'}]
@@ -275,7 +277,7 @@
         y:{field:'share', type:'quantitative', stack:'normalize', title:'Shape share'},
         color:{
           field:'shape', type:'nominal', title:'UFO shape',
-          scale:{scheme:'set2'},                   /* non-default */
+          scale:{scheme:'set2'},
           legend:{orient:'bottom', columns:4, labelLimit:220}
         },
         tooltip:[{field:'year'},{field:'shape'},{field:'share', type:'quantitative'}]
